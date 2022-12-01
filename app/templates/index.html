@@ -25,7 +25,7 @@
           <td>{{ employee.experience  }}</td>
           <td>{{ employee.preferred_position }}</td>
           <td>{{ employee.user.username }}</td>
-          <td><a class="btn btn-outline-primary" href="#">Подробнее</a></td>
+          <td><a class="btn btn-outline-primary" href="{{ url_for('employee_detail', id=employee.id) }}"> Подробнее </a></td>
         </tr>
       {% endfor %}
       </tbody>

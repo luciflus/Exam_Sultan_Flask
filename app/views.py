@@ -1,34 +1,92 @@
-# post functions
+from flask import render_template, redirect, request, url_for, flash
+from flask_login import login_user, logout_user, login_required
+from app import db, app
+from .models import Employee, User
+from .forms import EmployeeForm, UserForm
 
 def index():
-    pass
+    employees = Employee.query.all()
+    return render_template('index.html', employees=employees)
 
-
+@login_required
 def employee_create():
-    pass
+    form = EmployeeForm(request.form)
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            employee = Employee()
+            form.populate_obj(employee)
+            db.session.add(employee)
+            db.session.commit()
+            flash('Employee succesfully saved!', 'success')
+            return redirect(url_for('index'))
+    return render_template('employee_create.html', form=form)
 
 
-def employee_detail(employee_id):
-    pass
+def employee_detail(id):
+    users = User.query.all()
+    employee = Employee.query.get(id)
+    print(users)
+    return render_template('employee_detail.html', employee=employee, users=users)
 
+@login_required
+def employee_delete(id):
+    employee = Employee.query.get(id)
+    if request.method == 'POST':
+        db.session.delete(employee)
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('employee_delete.html', employee=employee)
 
-def employee_delete(employee_id):
-    pass
-
-
-def employee_update(employee_id):
-    pass
+@login_required
+def employee_update(id):
+    employee = Employee.query.get(id)
+    form = EmployeeForm(request.form, obj=employee)
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            form.populate_obj(employee)
+            db.session.add(employee)
+            db.session.commit()
+            return redirect(url_for('index'))
+    return render_template('employee_update.html', form=form)
 
 
 # user functions
-
 def register():
-    pass
-
+    form = UserForm(request.form)
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            user = User()
+            form.populate_obj(user)
+            db.session.add(user)
+            db.session.commit()
+            flash(f'User {user.username} successfully registered!', 'success')
+            return redirect(url_for('index'))
+    return render_template('register.html', form=form)
 
 def login():
-    pass
-
+    logout_user()
+    form = UserForm(request.form)
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            user = User.query.filter_by(username=request.form.get('username')).first()
+            if user and user.check_password(request.form.get('password')):
+                login_user(user)
+                flash('Successfully authorized!', 'primary')
+                return redirect(url_for('index'))
+                #render_template('base.html', form=form)
+            else:
+                flash('Incorrect login or password', 'danger')
+    return render_template('login.html', form=form)
 
 def logout():
-    pass
+    form = UserForm(request.form)
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            user = User.query.filter_by(username=request.form.get('username')).first()
+            if user and user.check_password(request.form.get('password')):
+                logout_user()
+                flash('Successfully logout!', 'primary')
+                return redirect(url_for('login'))
+            else:
+                flash('Incorrect login or password', 'danger')
+    return render_template('logout.html', form=form)
